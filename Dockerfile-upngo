@@ -1,0 +1,13 @@
+FROM golang:alpine as builder
+RUN apk update && apk upgrade && apk add --no-cache git
+RUN mkdir /build
+ADD . /build/
+WORKDIR /build
+RUN go build -o upngo .
+
+FROM alpine
+COPY --from=builder /build/upngo /upngo
+
+EXPOSE 8080
+
+CMD ["/upngo"]

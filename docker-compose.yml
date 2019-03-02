@@ -1,0 +1,17 @@
+version: '3'
+services:
+    upngo:
+        image: "alarsyo/upngo"
+        networks:
+            - upngo-net
+    nginx:
+        image: "alarsyo/nginx-serv"
+        ports:
+            - "80:80"
+        networks:
+            - upngo-net
+        depends_on:
+            - upngo
+
+networks:
+    upngo-net:
