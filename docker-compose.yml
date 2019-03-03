@@ -7,17 +7,20 @@ services:
         image: "alarsyo/upngo"
         networks:
             - upngo-net
-    nginx:
+    caddy:
         build:
             context: .
-            dockerfile: Dockerfile-nginx
-        image: "alarsyo/nginx-serv"
+            dockerfile: Dockerfile-caddy
+        image: "alarsyo/caddy"
         ports:
             - "80:80"
+            - "443:443"
         networks:
             - upngo-net
         depends_on:
             - upngo
+        volumes:
+            - "$HOME/.caddy:/root/.caddy"
 
 networks:
     upngo-net:

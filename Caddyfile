@@ -1,0 +1,7 @@
+example.com {
+    proxy / upngo:8080 {
+        transparent
+    }
+    log stdout
+    errors stderr
+}

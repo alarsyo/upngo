@@ -28,6 +28,7 @@ func main() {
 	handler, err := tusd.NewHandler(tusd.Config{
 		BasePath:      "/files/",
 		StoreComposer: composer,
+                RespectForwardedHeaders: true,
 	})
 	if err != nil {
 		panic(fmt.Errorf("Unable to create handler: %s", err))
