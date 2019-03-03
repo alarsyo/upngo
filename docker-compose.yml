@@ -21,6 +21,8 @@ services:
             - upngo
         volumes:
             - "$HOME/.caddy:/root/.caddy"
+        environment:
+            - UPNGO_HOSTNAME
 
 networks:
     upngo-net:

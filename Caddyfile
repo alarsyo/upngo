@@ -1,4 +1,4 @@
-example.com {
+{$UPNGO_HOSTNAME} {
     proxy / upngo:8080 {
         transparent
     }
