@@ -1,10 +1,16 @@
 version: '3'
 services:
     upngo:
+        build:
+            context: .
+            dockerfile: Dockerfile-upngo
         image: "alarsyo/upngo"
         networks:
             - upngo-net
     nginx:
+        build:
+            context: .
+            dockerfile: Dockerfile-nginx
         image: "alarsyo/nginx-serv"
         ports:
             - "80:80"
