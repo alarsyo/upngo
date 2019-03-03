@@ -71,3 +71,7 @@ $ python up.py MY_TEST_FILE.txt
 
 That's it! Your file was uploaded to the server, and you can download it by
 opening the url printed by the script.
+
+## Why UpN'Go
+
+I'm just bad at naming things. That's an **up**loader. Written in **Go**.
