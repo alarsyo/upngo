@@ -5,6 +5,7 @@ services:
             context: .
             dockerfile: Dockerfile-upngo
         image: "alarsyo/upngo"
+        restart: always
         networks:
             - upngo-net
     caddy:
@@ -12,6 +13,7 @@ services:
             context: .
             dockerfile: Dockerfile-caddy
         image: "alarsyo/caddy"
+        restart: always
         ports:
             - "80:80"
             - "443:443"
