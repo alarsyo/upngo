@@ -1,5 +1,14 @@
 {$UPNGO_HOSTNAME} {
-    proxy / upngo:8080 {
+    rewrite {
+        regexp .*
+        to {path} /
+    }
+    log stdout
+    errors stderr
+}
+
+{$UPNGO_HOSTNAME}/files {
+    proxy / upngo:8080/files/ {
         transparent
     }
     log stdout
