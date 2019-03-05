@@ -1,8 +1,8 @@
 <template>
   <div>
-    <h1>Test :)</h1>
-    <v-btn @click="$refs.fileInput.click()">
-      Test
+    <v-btn @click="$refs.fileInput.click()"
+           large>
+      Upload
       <input type="file"
              multiple
              style="display:none"
