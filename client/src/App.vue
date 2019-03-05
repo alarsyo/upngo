@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app dark>
     <v-navigation-drawer
       v-model="drawer"
       fixed
@@ -25,7 +25,7 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-toolbar app fixed scroll-off-screen color="primary">
+    <v-toolbar app dark fixed scroll-off-screen color="primary">
       <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
       <v-toolbar-title>UpN'Go</v-toolbar-title>
     </v-toolbar>

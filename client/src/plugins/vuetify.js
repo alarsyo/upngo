@@ -6,7 +6,7 @@ import 'vuetify/src/stylus/app.styl';
 Vue.use(Vuetify, {
   iconfont: 'md',
   theme: {
-    primary: colors.green.lighten2,
+    primary: colors.pink.darken1,
     secondary: colors.green.lighten4,
     accent: colors.yellow.accent1,
   },
