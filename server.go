@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/jwtauth"
-	"github.com/joho/godotenv"
 	"github.com/tus/tusd/pkg/filestore"
 	tusd "github.com/tus/tusd/pkg/handler"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/jwtauth"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 var dir = flag.String("dir", "tusd-files", "where the uploaded files should be stored")
@@ -22,18 +24,13 @@ func hello(w http.ResponseWriter, r *http.Request) {
 }
 
 func init() {
-	// Load .env file
-	env := godotenv.Load()
-	if env == nil {
-		fmt.Print("Could not retrieve .env file")
-	}
 	secret := os.Getenv("JWTAuthSecret")
 	tokenAuth = jwtauth.New("HS256", []byte(secret), nil)
-	/* // For debugging/example purposes, we generate and print
-		// a sample jwt token with claims `user_id:123` here:
-	        // Don't forget to import jwt "github.com/dgrijalva/jwt-go"
-		_, tokenString, _ := tokenAuth.Encode(jwt.MapClaims{"user_id": 123})
-		fmt.Printf("DEBUG: a sample jwt is %s\n\n", tokenString) */
+	// For debugging/example purposes, we generate and print
+	// a sample jwt token with claims `user_id:123` here:
+	// Don't forget to import jwt "github.com/dgrijalva/jwt-go"
+	// _, tokenString, _ := tokenAuth.Encode(jwt.MapClaims{"user_id": 123})
+	// fmt.Printf("DEBUG: a sample jwt is %s\n\n", tokenString) */
 }
 
 func main() {
