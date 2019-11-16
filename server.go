@@ -29,6 +29,7 @@ func main() {
 		BasePath:                "/files/",
 		StoreComposer:           composer,
 		RespectForwardedHeaders: true,
+		NotifyCompleteUploads:   true,
 	})
 	if err != nil {
 		panic(fmt.Errorf("Unable to create handler: %s", err))
@@ -37,7 +38,7 @@ func main() {
 	go func() {
 		for {
 			event := <-handler.CompleteUploads
-			fmt.Printf("Upload %s finished", event.Upload.ID)
+			fmt.Printf("Upload %s finished\n", event.Upload.ID)
 		}
 	}()
 
