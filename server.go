@@ -42,7 +42,7 @@ func main() {
 	}()
 
 	http.Handle("/files/", http.StripPrefix("/files/", handler))
-	err = http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8000", nil)
 	if err != nil {
 		panic(fmt.Errorf("Unable to listen: %s", err))
 	}
