@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/tus/tusd"
-	"github.com/tus/tusd/filestore"
+	"github.com/tus/tusd/pkg/filestore"
+	tusd "github.com/tus/tusd/pkg/handler"
 )
 
 var dir = flag.String("dir", "tusd-files", "where the uploaded files should be stored")
@@ -33,6 +33,13 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("Unable to create handler: %s", err))
 	}
+
+	go func() {
+		for {
+			event := <-handler.CompleteUploads
+			fmt.Printf("Upload %s finished", event.Upload.ID)
+		}
+	}()
 
 	http.Handle("/files/", http.StripPrefix("/files/", handler))
 	err = http.ListenAndServe(":8080", nil)
