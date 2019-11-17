@@ -28,6 +28,10 @@ func hello(w http.ResponseWriter, r *http.Request) {
 func init() {
 	flag.Parse()
 	secret := os.Getenv("JWTAuthSecret")
+	if secret == "" {
+		fmt.Fprintf(os.Stderr, "Please set up the JWTAuthSecret env variable\n")
+		os.Exit(1)
+	}
 	tokenAuth = jwtauth.New("HS256", []byte(secret), nil)
 	// For debugging/example purposes, we generate and print
 	// a sample jwt token with claims `user_id:123` here:
