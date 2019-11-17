@@ -62,13 +62,15 @@ func router() http.Handler {
 		// and tweak it, its not scary.
 		r.Use(jwtauth.Authenticator)
 
-		// /files/ routes
-		filesHandler := http.StripPrefix("/files/", tusdHandler())
-		r.Method("GET", "/files/", filesHandler)
-		r.Method("POST", "/files/", filesHandler)
-		r.Method("HEAD", "/files/", filesHandler)
-		r.Method("PATCH", "/files/", filesHandler)
-		r.Method("DELETE", "/files/", filesHandler)
+		// /files/ route
+		r.Route("/files", func(r chi.Router) {
+			filesHandler := http.StripPrefix("/files/", tusdHandler())
+			r.Method("GET", "/{id}", filesHandler)
+			r.Method("POST", "/", filesHandler)
+			r.Method("HEAD", "/{id}", filesHandler)
+			r.Method("PATCH", "/{id}", filesHandler)
+			r.Method("DELETE", "/{id}", filesHandler)
+		})
 	})
 
 	//Public routes
