@@ -9,14 +9,16 @@ import (
 	"github.com/tus/tusd/pkg/filestore"
 	tusd "github.com/tus/tusd/pkg/handler"
 
+	jwt "github.com/dgrijalva/jwt-go"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/jwtauth"
 
 	_ "github.com/joho/godotenv/autoload"
 )
 
+var debug = flag.Bool("debug", false, "enable debugging output")
 var dir = flag.String("dir", "tusd-files", "where the uploaded files should be stored")
-
 var tokenAuth *jwtauth.JWTAuth
 
 func hello(w http.ResponseWriter, r *http.Request) {
@@ -24,18 +26,18 @@ func hello(w http.ResponseWriter, r *http.Request) {
 }
 
 func init() {
+	flag.Parse()
 	secret := os.Getenv("JWTAuthSecret")
 	tokenAuth = jwtauth.New("HS256", []byte(secret), nil)
 	// For debugging/example purposes, we generate and print
 	// a sample jwt token with claims `user_id:123` here:
-	// Don't forget to import jwt "github.com/dgrijalva/jwt-go"
-	// _, tokenString, _ := tokenAuth.Encode(jwt.MapClaims{"user_id": 123})
-	// fmt.Printf("DEBUG: a sample jwt is %s\n\n", tokenString) */
+	if *debug {
+		_, tokenString, _ := tokenAuth.Encode(jwt.MapClaims{"user_id": 123})
+		fmt.Fprintf(os.Stderr, "DEBUG: a sample jwt is %s\n\n", tokenString)
+	}
 }
 
 func main() {
-	flag.Parse()
-
 	_, err := os.Stat(*dir)
 	if os.IsNotExist(err) {
 		err = os.MkdirAll(*dir, 0777)
