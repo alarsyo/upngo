@@ -22,4 +22,5 @@ func InitDb() {
 		panic(err)
 	}
 	CreateUsersTable()
+	InitTokens()
 }

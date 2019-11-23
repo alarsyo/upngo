@@ -56,6 +56,10 @@ func Login(email string, password string) (User, error) {
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
 		return User{}, err
 	} else {
+		t := Token{UserId: db_id, Tkn: ""}
+		if err = t.Create(); err != nil {
+			return User{}, err
+		}
 		return User{Id: db_id, Email: db_email, Password: db_password}, nil
 	}
 }
