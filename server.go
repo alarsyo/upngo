@@ -15,6 +15,8 @@ import (
 	"github.com/go-chi/jwtauth"
 
 	_ "github.com/joho/godotenv/autoload"
+
+	models "github.com/alarsyo/upngo/models"
 )
 
 var debug = flag.Bool("debug", false, "enable debugging output")
@@ -26,6 +28,7 @@ func hello(w http.ResponseWriter, r *http.Request) {
 }
 
 func init() {
+	models.InitDb()
 	flag.Parse()
 	secret := os.Getenv("JWTAuthSecret")
 	if secret == "" {
@@ -46,6 +49,7 @@ func main() {
 	if os.IsNotExist(err) {
 		err = os.MkdirAll(*dir, 0777)
 	}
+        defer models.DB.Close()
 	err = http.ListenAndServe(":8000", router())
 	if err != nil {
 		panic(fmt.Errorf("Unable to listen: %s", err))
