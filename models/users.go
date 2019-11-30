@@ -21,21 +21,24 @@ func CreateUsersTable() {
 	}
 }
 
-func (u *User) Create() {
+func (u *User) Create() error {
 	const query = "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id"
 	var id uint
 	if err := DB.QueryRow(query, u.Email, u.Password).Scan(&id); err != nil {
 		fmt.Fprintf(os.Stderr, "Could not create user %s", u.Email)
-	} else {
-		u.Id = id
+		return err
 	}
+	u.Id = id
+	return nil
 }
 
-func (u *User) Delete() {
+func (u *User) Delete() error {
 	const query = "DELETE FROM users WHERE email = $1"
 	if _, err := DB.Exec(query, u.Email); err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Could not delete user %s", u.Email)
+		return err
 	}
+	return nil
 }
 
 func Login(email string, password string) (User, error) {
@@ -47,19 +50,18 @@ func Login(email string, password string) (User, error) {
 	err := row.Scan(&db_id, &db_email, &db_password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			fmt.Fprintf(os.Stderr, "Could not create user %s", email)
+			fmt.Fprintf(os.Stderr, "Could not login user %s", email)
 		} else {
 			panic(err)
 		}
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(db_password), []byte(password))
-	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+	if err == bcrypt.ErrMismatchedHashAndPassword {
 		return User{}, err
-	} else {
-		t := Token{UserId: db_id, Tkn: ""}
-		if err = t.Create(); err != nil {
-			return User{}, err
-		}
-		return User{Id: db_id, Email: db_email, Password: db_password}, nil
 	}
+	t := Token{UserId: db_id, Tkn: ""}
+	if err = t.Create(); err != nil {
+		return User{}, err
+	}
+	return User{Id: db_id, Email: db_email, Password: db_password}, nil
 }

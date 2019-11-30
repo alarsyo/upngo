@@ -43,9 +43,11 @@ func (t *Token) Create() error {
 	return nil
 }
 
-func (t *Token) Delete() {
+func (t *Token) Delete() error {
 	const query = "DELETE FROM tokens WHERE uid = $1"
 	if _, err := DB.Exec(query, t.UserId); err != nil {
 		fmt.Fprintf(os.Stderr, "Could not delete user %d", t.UserId)
+		return err
 	}
+	return nil
 }
