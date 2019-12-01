@@ -15,28 +15,24 @@ import (
 	"github.com/go-chi/jwtauth"
 
 	_ "github.com/joho/godotenv/autoload"
+
+	models "github.com/alarsyo/upngo/models"
 )
 
 var debug = flag.Bool("debug", false, "enable debugging output")
 var dir = flag.String("dir", "tusd-files", "where the uploaded files should be stored")
-var tokenAuth *jwtauth.JWTAuth
 
 func hello(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello")
 }
 
 func init() {
+	models.InitDb()
 	flag.Parse()
-	secret := os.Getenv("JWTAuthSecret")
-	if secret == "" {
-		fmt.Fprintf(os.Stderr, "Please set up the JWTAuthSecret env variable\n")
-		os.Exit(1)
-	}
-	tokenAuth = jwtauth.New("HS256", []byte(secret), nil)
 	// For debugging/example purposes, we generate and print
 	// a sample jwt token with claims `user_id:123` here:
 	if *debug {
-		_, tokenString, _ := tokenAuth.Encode(jwt.MapClaims{"user_id": 123})
+		_, tokenString, _ := models.TokenAuth.Encode(jwt.MapClaims{"user_id": 123})
 		fmt.Fprintf(os.Stderr, "DEBUG: a sample jwt is %s\n\n", tokenString)
 	}
 }
@@ -46,6 +42,7 @@ func main() {
 	if os.IsNotExist(err) {
 		err = os.MkdirAll(*dir, 0777)
 	}
+	defer models.DB.Close()
 	err = http.ListenAndServe(":8000", router())
 	if err != nil {
 		panic(fmt.Errorf("Unable to listen: %s", err))
@@ -58,7 +55,7 @@ func router() http.Handler {
 	//Protected routes
 	r.Group(func(r chi.Router) {
 		// Seek, verify and validate JWT tokens
-		r.Use(jwtauth.Verifier(tokenAuth))
+		r.Use(jwtauth.Verifier(models.TokenAuth))
 
 		// Handle valid / invalid tokens. In this example, we use
 		// the provided authenticator middleware, but you can write your
