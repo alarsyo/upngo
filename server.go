@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net/http"
@@ -24,6 +25,50 @@ var dir = flag.String("dir", "tusd-files", "where the uploaded files should be s
 
 func hello(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello")
+}
+
+type credentials struct {
+	email    string `json:"email"`
+	password string `json:"password"`
+}
+
+func create(w http.ResponseWriter, r *http.Request) {
+	creds := &credentials{}
+	err := json.NewDecoder(r.Body).Decode(creds)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	user := models.User{Id: 1, Email: creds.email, Password: creds.password}
+	err = user.Create()
+	if err != nil {
+		http.Error(w, "Email is already taken", http.StatusUnauthorized)
+		return
+	}
+}
+
+func login(w http.ResponseWriter, r *http.Request) {
+	creds := &credentials{}
+	err := json.NewDecoder(r.Body).Decode(creds)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_, tkn, err := models.Login(creds.email, creds.password)
+	if err != nil {
+		http.Error(w, "Bad credentials", http.StatusUnauthorized)
+		return
+	}
+
+	res, err := json.Marshal(tkn)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(res)
 }
 
 func init() {
@@ -77,6 +122,8 @@ func router() http.Handler {
 	//Public routes
 	r.Group(func(r chi.Router) {
 		r.Get("/", hello)
+		r.Post("/login", login)
+		r.Post("/signup", create)
 	})
 
 	return r

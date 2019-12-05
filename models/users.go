@@ -41,7 +41,7 @@ func (u *User) Delete() error {
 	return nil
 }
 
-func Login(email string, password string) (User, error) {
+func Login(email string, password string) (User, Token, error) {
 	var db_id uint
 	var db_email string
 	var db_password string
@@ -57,11 +57,11 @@ func Login(email string, password string) (User, error) {
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(db_password), []byte(password))
 	if err == bcrypt.ErrMismatchedHashAndPassword {
-		return User{}, err
+		return User{}, Token{}, err
 	}
 	t := Token{UserId: db_id, Tkn: ""}
 	if err = t.Create(); err != nil {
-		return User{}, err
+		return User{}, Token{}, err
 	}
-	return User{Id: db_id, Email: db_email, Password: db_password}, nil
+	return User{Id: db_id, Email: db_email, Password: db_password}, t, nil
 }
