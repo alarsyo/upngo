@@ -55,7 +55,7 @@ func Login(email string, password string) (User, Token, error) {
 	err := row.Scan(&db_id, &db_email, &db_password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			fmt.Fprintf(os.Stderr, "Could not login user %s", email)
+			fmt.Fprintf(os.Stderr, "Could not login user %s\n", email)
 			return User{}, Token{}, err
 		} else {
 			panic(err)

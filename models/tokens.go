@@ -38,7 +38,7 @@ func (t *Token) Create() error {
 	_, t.Tkn, _ = TokenAuth.Encode(jwt.MapClaims{"user_id": t.UserId})
 	const query = "INSERT INTO tokens (uid, token) VALUES ($1, $2)"
 	if _, err := DB.Exec(query, t.UserId, t.Tkn); err != nil {
-		fmt.Fprintf(os.Stderr, "Could not create token for user %d", t.UserId)
+		fmt.Fprintf(os.Stderr, "Could not create token for user %d\n", t.UserId)
 		return err
 	}
 	return nil
@@ -51,7 +51,7 @@ func (t *Token) Get() error {
 	err := row.Scan(&db_token)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			fmt.Fprintf(os.Stderr, "Could not get token for user %d", t.UserId)
+			fmt.Fprintf(os.Stderr, "Could not get token for user %d\n", t.UserId)
 			return err
 		} else {
 			panic(err)
@@ -64,7 +64,7 @@ func (t *Token) Get() error {
 func (t *Token) Delete() error {
 	const query = "DELETE FROM tokens WHERE uid = $1"
 	if _, err := DB.Exec(query, t.UserId); err != nil {
-		fmt.Fprintf(os.Stderr, "Could not delete user %d", t.UserId)
+		fmt.Fprintf(os.Stderr, "Could not delete user %d\n", t.UserId)
 		return err
 	}
 	return nil
