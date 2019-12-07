@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 
@@ -40,6 +41,23 @@ func (t *Token) Create() error {
 		fmt.Fprintf(os.Stderr, "Could not create token for user %d", t.UserId)
 		return err
 	}
+	return nil
+}
+
+func (t *Token) Get() error {
+	const query = "SELECT token FROM tokens WHERE uid = $1"
+	row := DB.QueryRow(query, t.UserId)
+	var db_token string
+	err := row.Scan(&db_token)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Fprintf(os.Stderr, "Could not get token for user %d", t.UserId)
+			return err
+		} else {
+			panic(err)
+		}
+	}
+	t.Tkn = db_token
 	return nil
 }
 
