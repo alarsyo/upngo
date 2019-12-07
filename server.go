@@ -17,6 +17,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 
 	models "github.com/alarsyo/upngo/models"
+	routes "github.com/alarsyo/upngo/routes"
 )
 
 var debug = flag.Bool("debug", false, "enable debugging output")
@@ -77,6 +78,8 @@ func router() http.Handler {
 	//Public routes
 	r.Group(func(r chi.Router) {
 		r.Get("/", hello)
+		r.Post("/login", routes.Login)
+		r.Post("/signup", routes.Create)
 	})
 
 	return r
