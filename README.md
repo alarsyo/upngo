@@ -58,7 +58,7 @@ from tusclient.storage import filestorage
 storage = filestorage.FileStorage('tus_save_file')
 my_client = client.TusClient('https://example.com/files/')
 
-uploader = my_client.uploader(sys.argv[1], store_url=True, url_storage=storage)
+uploader = my_client.uploader(sys.argv[1], metadata={"filename": sys.argv[1]}, store_url=True, url_storage=storage)
 uploader.upload()
 print(uploader.get_url())
 ```
