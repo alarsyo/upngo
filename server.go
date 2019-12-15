@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/tus/tusd/pkg/filestore"
 	tusd "github.com/tus/tusd/pkg/handler"
@@ -68,7 +70,7 @@ func router() http.Handler {
 		r.Route("/files", func(r chi.Router) {
 			filesHandler := http.StripPrefix("/files/", tusdHandler())
 			r.Method("GET", "/{id}", filesHandler)
-			r.Method("POST", "/", filesHandler)
+			r.Post("/", postHandler)
 			r.Method("HEAD", "/{id}", filesHandler)
 			r.Method("PATCH", "/{id}", filesHandler)
 			r.Method("DELETE", "/{id}", filesHandler)
@@ -85,6 +87,29 @@ func router() http.Handler {
 	return r
 }
 
+func postHandler(w http.ResponseWriter, r *http.Request) {
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	userId := fmt.Sprintf("%v", claims["user_id"])
+	value := base64.StdEncoding.EncodeToString([]byte(userId))
+	meta := r.Header.Get("Upload-Metadata")
+	meta += ",id " + value
+	r.Header.Set("Upload-Metadata", meta)
+	store := filestore.New(*dir)
+
+	composer := tusd.NewStoreComposer()
+	store.UseIn(composer)
+	handler, err := tusd.NewUnroutedHandler(tusd.Config{
+		BasePath:                "/files/",
+		StoreComposer:           composer,
+		RespectForwardedHeaders: true,
+		NotifyCompleteUploads:   true,
+	})
+	if err != nil {
+		panic(fmt.Errorf("Unable to create handler: %s", err))
+	}
+	handler.PostFile(w, r)
+}
+
 func tusdHandler() http.Handler {
 	store := filestore.New(*dir)
 
@@ -97,14 +122,31 @@ func tusdHandler() http.Handler {
 		RespectForwardedHeaders: true,
 		NotifyCompleteUploads:   true,
 	})
+
 	if err != nil {
 		panic(fmt.Errorf("Unable to create handler: %s", err))
 	}
 
 	go func() {
 		for {
-			event := <-handler.CompleteUploads
-			fmt.Printf("Upload %s finished\n", event.Upload.ID)
+			select {
+			case event := <-handler.CompleteUploads:
+				fmt.Printf("Upload %s finished\n", event.Upload.ID)
+				err := models.SetFileCompleted(event.Upload.ID)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Could not set file with id %s as completed", event.Upload.ID)
+				}
+			case event := <-handler.CreatedUploads:
+				filename, ok := event.Upload.MetaData["filename"]
+				if ok {
+					fmt.Printf("Adding upload %s of user %s to db", filename, "lol")
+					owner, ok := strconv.Atoi(event.Upload.MetaData["user_id"])
+					if ok == nil {
+						file := models.File{FileId: event.Upload.ID, Owner: uint(owner), Filename: filename, Size: event.Upload.Size, Completed: false}
+						file.Create()
+					}
+				}
+			}
 		}
 	}()
 
