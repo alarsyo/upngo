@@ -68,6 +68,7 @@ func router() http.Handler {
 
 		// /files/ routes
 		r.Route("/files", func(r chi.Router) {
+			r.Get("/", routes.GetFilesInfo)
 			r.Get("/{id}", getHandler)
 		})
 
@@ -113,7 +114,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	userId := fmt.Sprintf("%v", claims["user_id"])
 	value := base64.StdEncoding.EncodeToString([]byte(userId))
 	meta := r.Header.Get("Upload-Metadata")
-	meta += ",id " + value
+	meta += ",user_id " + value
 	r.Header.Set("Upload-Metadata", meta)
 
 	store := filestore.New(*dir)
@@ -124,6 +125,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		StoreComposer:           composer,
 		RespectForwardedHeaders: true,
 		NotifyCompleteUploads:   true,
+		NotifyCreatedUploads:    true,
 	})
 
 	if err != nil {
@@ -136,14 +138,16 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 			case event := <-handler.CreatedUploads:
 				filename, ok := event.Upload.MetaData["filename"]
 				if ok {
-					fmt.Printf("Adding upload %s of user %s to db", filename, event.Upload.MetaData["user_id"])
+					fmt.Printf("Adding upload %s of user %s to db\n", filename, event.Upload.MetaData["user_id"])
 					owner, ok := strconv.Atoi(event.Upload.MetaData["user_id"])
 					if ok == nil {
 						file := models.File{FileId: event.Upload.ID, Owner: uint(owner), Filename: filename, Size: event.Upload.Size, Completed: false}
 						file.Create()
 					} else {
-						fmt.Fprintf(os.Stderr, "Could not add upload %s of user %s to db", filename, event.Upload.MetaData["user_id"])
+						fmt.Fprintf(os.Stderr, "Could not add upload %s of user %s to db\n", filename, event.Upload.MetaData["user_id"])
 					}
+				} else {
+					fmt.Fprintf(os.Stderr, "Could not retrieve filename for user %s\n", userId)
 				}
 			}
 		}
@@ -158,7 +162,7 @@ func tusdHandler() http.Handler {
 	store.UseIn(composer)
 
 	handler, err := tusd.NewHandler(tusd.Config{
-		BasePath:                "/files/",
+		BasePath:                "/tus/",
 		StoreComposer:           composer,
 		RespectForwardedHeaders: true,
 		NotifyCompleteUploads:   true,

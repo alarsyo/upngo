@@ -26,7 +26,7 @@ func CreateFilesTable() {
 }
 
 func (f *File) Create() error {
-	const query = "INSERT INTO files (file_id, owner, filename, size, completed) VALUES ($1, $2, $3, $4)"
+	const query = "INSERT INTO files (file_id, owner, filename, size, completed) VALUES ($1, $2, $3, $4, $5)"
 	if _, err := DB.Exec(query, f.FileId, f.Owner, f.Filename, f.Size, f.Completed); err != nil {
 		fmt.Fprintf(os.Stderr, "Could not create file %s (with id %s) for user %d\n", f.Filename, f.FileId, f.Owner)
 		return err
@@ -54,13 +54,14 @@ func GetFiles(user uint) ([]File, error) {
 	for rows.Next() {
 		var fileid string
 		var owner uint
+		var filename string
 		var size int64
 		var completed bool
-		err = rows.Scan(&fileid, &owner, &size, &completed)
+		err = rows.Scan(&fileid, &owner, &filename, &size, &completed)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error while getting file for user %d\n", user)
 		} else {
-			file := File{FileId: fileid, Owner: owner, Size: size, Completed: completed}
+			file := File{FileId: fileid, Owner: owner, Filename: filename, Size: size, Completed: completed}
 			files = append(files, file)
 		}
 	}
