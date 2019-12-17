@@ -1,6 +1,8 @@
 package models
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 )
@@ -34,10 +36,26 @@ func (f *File) Create() error {
 	return nil
 }
 
-func (f *File) Delete() error {
+func DeleteFile(owner uint, fileid string) error {
+	var db_owner uint
+	const validate = "SELECT owner FROM files WHERE file_id=$1"
+	row := DB.QueryRow(validate, owner)
+	err := row.Scan(&db_owner)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Fprintf(os.Stderr, "Could not get file %s (claiming owner %d)\n", fileid, owner)
+			return err
+		} else {
+			panic(err)
+		}
+	}
+	if db_owner != owner {
+		return errors.New("Unauthorized")
+	}
+
 	const query = "DELETE FROM files WHERE file_id = $1"
-	if _, err := DB.Exec(query, f.FileId); err != nil {
-		fmt.Fprintf(os.Stderr, "Could not delete file %s (with id %s) for user %d\n", f.Filename, f.FileId, f.Owner)
+	if _, err := DB.Exec(query, fileid); err != nil {
+		fmt.Fprintf(os.Stderr, "Could not delete file with id %s\n", fileid)
 		return err
 	}
 	return nil
@@ -54,14 +72,13 @@ func GetFiles(user uint) ([]File, error) {
 	for rows.Next() {
 		var fileid string
 		var owner uint
-		var filename string
 		var size int64
 		var completed bool
-		err = rows.Scan(&fileid, &owner, &filename, &size, &completed)
+		err = rows.Scan(&fileid, &owner, &size, &completed)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error while getting file for user %d\n", user)
 		} else {
-			file := File{FileId: fileid, Owner: owner, Filename: filename, Size: size, Completed: completed}
+			file := File{FileId: fileid, Owner: owner, Size: size, Completed: completed}
 			files = append(files, file)
 		}
 	}

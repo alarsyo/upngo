@@ -1,11 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/base64"
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 
 	"github.com/tus/tusd/pkg/filestore"
@@ -24,6 +27,18 @@ import (
 
 var debug = flag.Bool("debug", false, "enable debugging output")
 var dir = flag.String("dir", "tusd-files", "where the uploaded files should be stored")
+
+// The following code to extract id from a path is from https://github.com/tus/tusd
+var reExtractFileID = regexp.MustCompile(`([^/]+)\/?$`)
+
+// extractIDFromPath pulls the last segment from the url provided
+func extractIDFromPath(url string) (string, error) {
+	result := reExtractFileID.FindStringSubmatch(url)
+	if len(result) != 2 {
+		return "", errors.New("Id not found")
+	}
+	return result[1], nil
+}
 
 func hello(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello")
@@ -78,7 +93,7 @@ func router() http.Handler {
 			r.Post("/", postHandler)
 			r.Method("HEAD", "/{id}", filesHandler)
 			r.Method("PATCH", "/{id}", filesHandler)
-			r.Method("DELETE", "/{id}", filesHandler)
+			r.Delete("/{id}", deleteHandler)
 		})
 	})
 
@@ -90,6 +105,44 @@ func router() http.Handler {
 	})
 
 	return r
+}
+
+func deleteHandler(w http.ResponseWriter, r *http.Request) {
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	userId := fmt.Sprintf("%v", claims["user_id"])
+	User, ok := strconv.Atoi(userId)
+	if ok == nil {
+		FileId, err := extractIDFromPath(r.URL.Path)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = models.DeleteFile(uint(User), FileId)
+		if err == nil {
+			store := filestore.New(*dir)
+			composer := tusd.NewStoreComposer()
+			store.UseIn(composer)
+			handler, err := tusd.NewUnroutedHandler(tusd.Config{
+				BasePath:                "/tus/",
+				StoreComposer:           composer,
+				RespectForwardedHeaders: true,
+				NotifyCompleteUploads:   true,
+				NotifyCreatedUploads:    true,
+			})
+			if err != nil {
+				panic(fmt.Errorf("Unable to create handler: %s", err))
+			}
+			handler.DelFile(w, r)
+			return
+		}
+		if err == sql.ErrNoRows {
+			http.Error(w, "File does not exists", http.StatusNotFound)
+		} else {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		}
+	} else {
+		http.Error(w, ok.Error(), http.StatusInternalServerError)
+	}
 }
 
 func getHandler(w http.ResponseWriter, r *http.Request) {
