@@ -39,7 +39,7 @@ func (f *File) Create() error {
 func DeleteFile(owner uint, fileid string) error {
 	var db_owner uint
 	const validate = "SELECT owner FROM files WHERE file_id=$1"
-	row := DB.QueryRow(validate, owner)
+	row := DB.QueryRow(validate, fileid)
 	err := row.Scan(&db_owner)
 	if err != nil {
 		if err == sql.ErrNoRows {

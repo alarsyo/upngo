@@ -14,7 +14,7 @@ func GetFilesInfo(w http.ResponseWriter, r *http.Request) {
 	_, claims, _ := jwtauth.FromContext(r.Context())
 	userId := fmt.Sprintf("%v", claims["user_id"])
 	user, ok := strconv.Atoi(userId)
-	if ok != nil {
+	if ok != nil || user < 0 {
 		http.Error(w, "Wrong user id", http.StatusUnauthorized)
 		return
 	}

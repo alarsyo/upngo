@@ -112,6 +112,10 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	userId := fmt.Sprintf("%v", claims["user_id"])
 	User, ok := strconv.Atoi(userId)
 	if ok == nil {
+		if User < 0 {
+			http.Error(w, "Wrong user id", http.StatusUnauthorized)
+			return
+		}
 		FileId, err := extractIDFromPath(r.URL.Path)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -194,6 +198,10 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 					fmt.Printf("Adding upload %s of user %s to db\n", filename, event.Upload.MetaData["user_id"])
 					owner, ok := strconv.Atoi(event.Upload.MetaData["user_id"])
 					if ok == nil {
+						if owner < 0 {
+							http.Error(w, err.Error(), http.StatusUnauthorized)
+							return
+						}
 						file := models.File{FileId: event.Upload.ID, Owner: uint(owner), Filename: filename, Size: event.Upload.Size, Completed: false}
 						file.Create()
 					} else {
