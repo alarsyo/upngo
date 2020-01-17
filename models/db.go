@@ -23,4 +23,5 @@ func InitDb() {
 	}
 	CreateUsersTable()
 	InitTokens()
+	CreateFilesTable()
 }
